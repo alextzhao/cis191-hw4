@@ -17,6 +17,7 @@ directions "north", "south", "east", or "west" is allowed. If at any point this 
 - `use <item>`: Use this command to use an inventory item at special points in the game
 - `wear <item>`: Use this command to wear an inventory item.
 
+## If you don't want any spoilers and want to play through the game yourself, do not read past this point ##
 #### Objective: ####
 You are onboard a nuclear submarine. Briefly, You goal is to retrieve a virtual reality time machine and use that to stop an apocalypse from happening.
 
