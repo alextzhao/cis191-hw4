@@ -147,7 +147,7 @@ function goto {
         case $currLocation in
           room ) echo "you bump into the black wall so hard you die."; echo "gg, better luck next time"; exit 0;
             ;;
-          corridor ) echo "you up down the corridor and arrive at a room"; initialLocationMessage engineRoom;
+          corridor ) echo "you go up the corridor and arrive at a room"; initialLocationMessage engineRoom;
             currLocation=engineRoom;
             ;;
           engineRoom ) echo "you can't go north from here"
@@ -200,7 +200,7 @@ function goto {
     # Go East. Behavior depends on current location.
     [Ee]ast )
         case $currLocation in
-          room ) echo "you find a door and you walk out. A narrow corrirdor greets you.
+          room ) echo "you find a door and you walk out. A narrow corridor greets you.
           There seems to be pipes running along the curved walls of this 'corridor'
           and metal grates everywhere. What is this place?? You continue walking and
           arrive at an intersection"; initialLocationMessage corridor;
@@ -215,7 +215,7 @@ function goto {
           and realize that you've just tripped over a body. Shuddering, all you
           can think of is to get out of this place, whatever it is, as quickly as possible.
           Good thing there is a door, and you quickly go through it and enter a room;"
-          initialLocationMessage codeRoom; currLocation=codeRoom;
+          currLocation=codeRoom;
             ;;
           periscopeRoom ) echo "you cannot go east from here"
             ;;
@@ -274,12 +274,21 @@ function goto {
             initialLocationMessage timeMachineRoom; currLocation=timeMachineRoom;
           fi
           ;;
-        armory ) echo "you follow the corridor and start walking. For some reason,
+        armory )
+
+        if [[ $numberLocksLeft -eq 0 ]]
+        then
+          echo "you walk back down the looooog corridor. With the door unlocked,
+          you walk into the mysterious room."
+          currLocation=timeMachineRoom;
+        else
+        echo "you follow the corridor and start walking. For some reason,
         this corridor seem extraaa long. After who knows how much time, you finally
         arrive at what looks like a very heavy door. You try to enter but the door
         seems locked."
           initialLocationMessage timeMachineRoomOutside;
           currLocation=timeMachineRoomOutside
+        fi
           ;;
         codeRoom ) echo "you shudder when you think about the dead body on the
         other side of the door. After a moment of hesitation you decide to still exit.
@@ -399,7 +408,7 @@ function inspectItem {
     of some kind?"
       ;;
     [Kk]ey[Cc]ard ) echo "You look closer at the keycard and realize your name is on it
-    'Kerensky Alexiaminov'...security clearance level 'most secret'. You member using it
+    'Kerensky Alexiaminov'...security clearance level 'most secret'. You remember using it
     somewhere..."
       ;;
     [Cc]lock ) echo "The clock looks like an ordinary clock...except for some reason
@@ -644,7 +653,7 @@ function initiateHelmetMode {
   sound. It's amazing, really... what being accustomed to something...can sometimes
   blind you to what is actually happening around you..."
 
-  #sleep 15
+  sleep 15
   echo $spacer
 
   echo "SUDDENLY, you feel this horrible whirling sensation, as if everything around you
@@ -655,7 +664,7 @@ function initiateHelmetMode {
   dirt as the horse runs, faster and faster...
   OH howwwww you wish to slow time down!"
 
-  #sleep 15
+  sleep 15
   echo $spacer
 
   echo "time is ticking....tik..tok..tik..tok... AHHH what should you do?"
@@ -771,8 +780,9 @@ while true; do
         addToInventory "clock"
         addToInventory "jacket"
         echo "jacket" >> wearing
-        numberLocksLeft=0
-        currLocation=timeMachineRoom
+        #numberLocksLeft=0
+        #currLocation=timeMachineRoom
+        currLocation=timeMachineRoomOutside
         ;;
       [Ff]uck ) echo "wow there. no swearing. fuck you too. You just died"; exit 0;
         ;;

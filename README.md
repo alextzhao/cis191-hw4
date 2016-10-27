@@ -87,4 +87,8 @@ Watsane
 
 October, 2070
 
-#### Note to the grader: a walk through of the game ####
+# Note to the grader: a walk through of the game #
+### Please try to play the game first by yourself! ###
+
+![alt text][logo]
+[logo]: ./walkthrough.jpg "Walkthrough"
