@@ -5,6 +5,7 @@ The is the code repository for cis191 hw4, fall 2016. The goal of this homework 
 See the "STORY" section for the complete story associated with this text game. Beware of spoilers.
 
 ###### To run the game, enter `./adventure.sh` on command line ######
+If unable to run the game, change the permissions on adventure.sh with `chmod 755 adventure.sh`
 
 #### Allowed Commands: ####
 - `look`: use this command at any point to observe the location you are in
