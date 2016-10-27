@@ -15,7 +15,14 @@ currLocation='room'
 # using the key and keycard when at timeMachineRoomOutside removes one lock.
 numberLocksLeft=2
 
-# TODO: Need to add a timeMachineRoomOutside location to everywhere...
+## indicates whether the timer has started counting down yet.
+timerSet="false" ## In bash, 1 is false.
+
+## Used for when the player is trying to enter the appropriate code when wearing
+# the helmet. The player only has two chances reset his mistakes otherwise the
+# world will come to an end.
+numAttemptsRemaining=3
+
 
 spacer="-----------------------------------------------------------------------"
 welcomeMessage=$"Welcome. You wake up having absolutely no recollection
@@ -23,7 +30,32 @@ who you are. You have a throbbing headache. You’re in a room without windows,
 with its ceilings and walls completed covered in pitch black material. What
 would you like to do?"
 
+## A helper function that initiates a countdown, bomb style :P
+### Reference: http://www.unix.com/shell-programming-and-scripting/98889-display-runnning-countdown-bash-script.html
+# Note: this is only code fragment in the entire fragment that was referenced
+# from an external source, with my own modifications. I do not claim credit
+# for the countdown() function.
+## NOTE: This function is actually used in this submission. Included here as a
+# potential way to improve this game in the future.
+# IDEA: Have a timer printed to the screen when using the clock.
+countdown()
+(
+  IFS=:
+  set -- $*
+  secs=$(( ${1#0} * 3600 + ${2#0} * 60 + ${3#0} ))
+  while [ $secs -gt 0 ]
+  do
+    sleep 1 &
+    printf "\r%02d:%02d:%02d" $((secs/3600)) $(( (secs/60)%60)) $((secs%60))
+    secs=$(( $secs - 1 ))
+    wait
+  done
+  echo
+)
 
+# ##############################################################################
+# Helper function to display a help message.
+# ##############################################################################
 function displayHelp {
   echo $spacer
   echo "look: use this command at any point to observe the location you are in
@@ -52,7 +84,27 @@ function displayHelp {
 }
 
 
+function validateCode {
+  if [[ $1 == "031012" ]]
+  then
+    echo "Code Accepted!! Congratulations, Kerensky Alexiaminov. You have
+    successfully revereted the Kremlin's decision to launch a nuclear war
+    against the United States. Your people are safe...for now. Fin."
+    exit 0;
+  else
+    numAttemptsRemaining=$((numAttemptsRemaining-1))
 
+    if [[ $numAttemptsRemaining -lt 1 ]]
+    then
+      echo "the helmet self destructs, leaving nothing but destruction to the
+      hopes and dreams of the Russian population, and your face."
+      exit 0;
+    fi
+
+    echo "invalid code. number of attempts remaining: $numAttemptsRemaining"
+  fi
+
+}
 # ##############################################################################
 # A short description of a new location
 # ##############################################################################
@@ -77,13 +129,12 @@ function initialLocationMessage {
     armory ) echo "The room is somber and silent, as if it is a symbolism of a
     great tragedy that has happened."
       ;;
-    codeRoom ) ## TODO: Do somethign.
+    codeRoom ) echo "welcome to the codeRoom"
       ;;
     * ) echo "not a valid location"
       ;;
   esac
 }
-
 
 
 # ##############################################################################
@@ -94,7 +145,7 @@ function goto {
     # Go North - behavior depends on current location
     [Nn]orth )
         case $currLocation in
-          room ) echo "you bump into the black wall so hard you nearly kill yourself"
+          room ) echo "you bump into the black wall so hard you die."; echo "gg, better luck next time"; exit 0;
             ;;
           corridor ) echo "you up down the corridor and arrive at a room"; initialLocationMessage engineRoom;
             currLocation=engineRoom;
@@ -219,7 +270,7 @@ function goto {
             heavy door just won't open. But you SWEAR you remember this place and
             that there was a way to open it...";
           else
-            "Finally, with the door unlocked, you enter the mysterious room."
+            echo "Finally, with the door unlocked, you enter the mysterious room."
             initialLocationMessage timeMachineRoom; currLocation=timeMachineRoom;
           fi
           ;;
@@ -255,8 +306,8 @@ function lookaround {
     to your right there's a sofa with what looks like a dingy jacket draped on
     top of it. You glance forward and suddenly realize that somehow you've been
     here before, and that what you see seems weirdly familiar: there's a desk on
-    the northeast corner of the room, on which a digital clock is blinking with its
-    eerie blue light: '3am...October 12th...'. Beside the clock is also a dusty
+    the northeast corner of the room, on which clock is sitting...tik..tok..tik..
+    tok.. '3am...October 12th...031012...huh'. Beside the clock is also a dusty
     picture, of a beautiful lady and a cute little girl... but who are they?"
       ;;
     corridor ) echo "There's no one but you. The dim lights seem to flicker with a
@@ -276,7 +327,7 @@ function lookaround {
     timeMachineRoom ) echo "You're still uncomfortable with the subtle buzz in
     the room, but you can't quite place where it is coming from. Sanning the room
     you find a single raised platform in the middle of the room. Perched
-    on top fo the platform is a shiny helmet."
+    on top of the platform is a shiny helmet."
       ;;
     timeMachineRoomOutside ) echo "Behind you is the eerily long corridor, and in front of
     you is a heaviest door you've ever seen in your life. You really want to go
@@ -290,7 +341,9 @@ function lookaround {
     Have you been here before and what did you do here? The radar, panel of instruments,
     buttons and knobs seem so familiar, as if you were just here 2 days ago. You see
     a screen with the words 'HIT confirmed' flashing obnoxiously in red, and a map
-    with the US cities Los Angeles, New York and Chicago circled."
+    with the US cities Los Angeles, New York, Washington DC and Chicago circled.
+    beside the screen seems to be a broken TV, with the news anchor muttering
+    incoherently about a nuclear blast."
 
     if ! $(inventoryContains "keycard");
     then
@@ -329,10 +382,18 @@ function inspectItem {
       echo "There also seems to be an object in the pocket...";
     fi
       ;;
-    [Hh]elmet ) echo "The helmet looks like an ordinary motorcycle helmet, but it
-    is somehow heavier and lighter at the same time, as if its weight changes
-    with time. As you hold it in your hands, the buzzing noise gets louder and louder,
-    but it is not uncomfortable. You wonder if you should put it on"
+    [Hh]elmet )
+    if [[ $currLocation == timeMachineRoom ]]
+    then
+      echo "The helmet looks like an ordinary motorcycle helmet, but it
+      is somehow heavier and lighter at the same time, as if its weight changes
+      with time. As you hold it in your hands, the buzzing noise gets louder and louder,
+      but it is not uncomfortable. Somehow, vaguely, you suddenly recall needing
+      something. Whatever, deja vu, maybe. You wonder if you should... or are
+      prepared to... put the helmet on. "
+    else
+      echo "there is no helmet around to inspect"
+    fi
       ;;
     [Kk]ey ) echo "This key looks ancient. Perhaps it's used to open a special door
     of some kind?"
@@ -390,7 +451,7 @@ function getItem {
       ;;
 
     [Hh]elmet )
-      if [[ $location != timeMachineRoom ]];
+      if [[ $currLocation != timeMachineRoom ]];
       then
         echo "there is no helmet around";
       else
@@ -451,7 +512,6 @@ function removeFromInventory {
     ## FIXME: THIS sed is NOT compatible with GNU linux. sed's i flag on mac is not
     # portable to other linux distibutions
     sed -i.bak "/^$1$/d" ./inventory
-    echo "$1 has been removed from your inventory"
   fi
 }
 
@@ -484,36 +544,58 @@ function useItem {
         removeFromInventory 'key'
         if [[ numberLocksLeft -eq 0 ]];
         then
-          echo "as the lock falls away, you wonder if this mysterious heavy door has finally been unlocked";
-        else echo "hm. maybe something else is required."
+          echo "As the lock falls away, you wonder if this mysterious heavy door has finally been unlocked";
         fi
       fi
       ;;
 
       ## IDEA: Make it more fun so the player has to use the keycard Immediately after
       # the key. Will this be too hard?
-    [Kk]ey[Cc]ard ) echo "todo"
+    [Kk]ey[Cc]ard )
       if [[ $currLocation != timeMachineRoomOutside ]]
       then
         echo 'there is no use for a keycard here.'
       else
         echo "you look around and find a hidden keypad with patterns on it. you
         swipe. No luck the first time. You do it again. Green light. Something
-        must've worked:"
+        must've worked."
         # if all the locks on timeMachineRoom have been unlocked, then print an
         # appropriate welcome message.
         numberLocksLeft=$((numberLocksLeft-1))
         removeFromInventory 'keycard'
         if [[ numberLocksLeft -eq 0 ]];
         then
-          echo "along with the green light, you hear the faint sound of geras moving
+          echo "Along with the green light, you hear the faint sound of gears moving
           you wonder if this mysterious heavy door has finally been unlocked";
-        else echo "hm. maybe something else is required."
         fi
       fi
       ;;
-    [Cc]lock ) echo "todo"
-      ## TODO: USE CLOCK: After implementing the time machine room need to add this functionality.
+    [Cc]lock )
+      if [[ ! $timerStart == "true" ]]
+      then
+        echo "there is not use for a clock now"
+      else
+        echo "As you pull out your clock, the seconds hand flashes by your eyes,
+        tik..tok..tik..tok in an even rythm, seemingly unfazed by the speeding
+        up of spacetime that is so warping your identity. You have no inkling of
+        how much time has passed, but evenually the turning and twisting and
+        revolving come to a stop...it seems...that time has finally returned
+        back to normal"
+
+        timerStart="false" ## Reset the timer.
+
+        sleep 10
+
+        echo "As the blur around you gradually slows down and you can see properly
+        again, you realize that the helmet is an Augmented reality device."
+
+        sleep 5
+
+        echo "After some time, a message pops up on the screen 'Reset
+        mistake #103941: undo nuclear launch at the US', and a prompt that seems
+        to be asking for a 6 digit code...use the command 'Code <'code'>' to enter
+        your code"
+      fi
       ;;
     * ) echo "cannot use item"
       ;;
@@ -524,6 +606,12 @@ function useItem {
 # Wear either a helmet or the jacket
 # ##############################################################################
 function wearItem {
+  if [[ ! $(grep -oi $1 wearing | wc -l) -eq 0 ]]
+  then
+    echo "you are already wearing $1. Cannot wear it again"
+    return;
+  fi
+
   case $1 in
     jacket )
       if [[ $(grep -oi jacket inventory | wc -l) -eq 0 ]];
@@ -536,22 +624,47 @@ function wearItem {
       ;;
 
     helmet )
-      if [[ $location != timeMachineRoom ]];
+      if [[ $currLocation != timeMachineRoom ]];
       then
         echo "there is no helmet in your current location"
       else
-        ## TODO: What happens after you wear the helmet??
-        ## TODO: If the player does not have an alarm clock, then the player is
-        # dead. Otherwise, prompt the player to use the alarm clock to slow down time.
-        echo "you are now wearing the helmet. You feel a gush of energy..."
         echo "helmet" >> wearing;
+        initiateHelmetMode
+
       fi
     ;;
     *) echo "You cannot wear $1"
     ;;
   esac
-
 }
+
+function initiateHelmetMode {
+  echo "you put on the helmet and instantly feel a warmth in your body. The
+  buzzing noise gets louder but quickly seems softer as you become one with the
+  sound. It's amazing, really... what being accustomed to something...can sometimes
+  blind you to what is actually happening around you..."
+
+  #sleep 15
+  echo $spacer
+
+  echo "SUDDENLY, you feel this horrible whirling sensation, as if everything around you
+  is collapsing and twisting and compressing into one thing... the world spinning
+  and spinning and spinning and white lights flashing, going faster and faster.
+  AHHHHH it's as if time is speeding up and you're getting dragged behind, as if
+  you are tied feet first to a running horse, face flat on the ground, eating
+  dirt as the horse runs, faster and faster...
+  OH howwwww you wish to slow time down!"
+
+  #sleep 15
+  echo $spacer
+
+  echo "time is ticking....tik..tok..tik..tok... AHHH what should you do?"
+  ## The user has 30 seconds to use the clock!! Or get it if they don't already
+  # have it in their inventory!!!!!
+  timerStart="true"
+}
+
+
 ################################################################################
 # Overarching logic of the game. See above helper functions for specific
 # implementation of what happens in each stage of the game
@@ -570,7 +683,27 @@ echo "$welcomeMessage"
 > wearing
 
 while true; do
-  read -p ">>>>>> " verb object
+  # If the timer has already been started, then the use only has 30 seconds to use clock.
+  if [[ $timerStart == "true" ]]
+  then
+    ## IDEA: This resets the timer every time the user types ANYTHING. Make
+    # sure that in future version the user say, has a fixed amount of time like 1 minute
+    # to find the clock in the game and use it.
+    read -p ">>>>>> " -t 10 verb object
+    if [[ -z "${verb// }" ]]
+    then
+      echo "you ran out of time! As the world closes around you, your soul becomes
+      crushed by the dilation of time... and lost to eternity. maybe you weren't
+      prepared enough to wear this helmet."
+      exit 0;
+    else
+      echo "the clock is still ticking..."
+    fi
+
+  else
+    read -p ">>>>>> " verb object
+  fi
+
   case $verb in
       # Handles to GO <Location> case
       [Gg]o ) if [[ -z "${object// }" ]]; then echo  "usage: go <direction>"; else goto $object; fi
@@ -638,10 +771,24 @@ while true; do
         addToInventory "clock"
         addToInventory "jacket"
         echo "jacket" >> wearing
-        currLocation=timeMachineRoomOutside
+        numberLocksLeft=0
+        currLocation=timeMachineRoom
+        ;;
+      [Ff]uck ) echo "wow there. no swearing. fuck you too. You just died"; exit 0;
+        ;;
+      [Cc]ode )
+          if [[ -z "${object// }" ]];
+          then
+            echo  "usage: code <codeNumber>";
+          else validateCode $object;
+          fi;
         ;;
       # Anything else is treated as an invalid command.
       *) echo "invalid command"
       ;;
   esac
+
+  # Reset verb and object so they can be used again. Used for the timeout input case
+  verb=''
+  object=''
 done

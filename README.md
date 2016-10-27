@@ -4,6 +4,8 @@ The is the code repository for cis191 hw4, fall 2016. The goal of this homework 
 
 See the "STORY" section for the complete story associated with this text game. Beware of spoilers.
 
+###### To run the game, enter `./adventure.sh` on command line ######
+
 #### Allowed Commands: ####
 - `look`: use this command at any point to observe the location you are in
 around you, including potential items that you can add to your inventory.
@@ -16,8 +18,14 @@ directions "north", "south", "east", or "west" is allowed. If at any point this 
 - `inspect <item>`: Use this to look more closely at an inventory item
 - `use <item>`: Use this command to use an inventory item at special points in the game
 - `wear <item>`: Use this command to wear an inventory item.
+- `other commands`: There may be other commands available, but these are special commands
+that the player is encouraged to discover by themselves
 
-## If you don't want any spoilers and want to play through the game yourself, do not read past this point ##
+##### Tip: #####
+- At any point in the game, it is highly encouraged that the player use `look` to
+inspect the environment. You might just discover something useful in the descriptions of the environment
+
+## --If you don't want any spoilers and want to play through the game yourself, do not read past this point-- ##
 #### Objective: ####
 You are onboard a nuclear submarine. Briefly, You goal is to retrieve a virtual reality time machine and use that to stop an apocalypse from happening.
 
@@ -78,3 +86,5 @@ Sincerely,
 Watsane
 
 October, 2070
+
+#### Note to the grader: a walk through of the game ####
